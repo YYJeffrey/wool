@@ -4,6 +4,7 @@
 import requests
 import time
 import re
+import os
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81"
@@ -124,10 +125,20 @@ class Wiki:
     def get_urls(self):
         print("-" * 60)
         print("节点ssr二维码地址列表：")
+        ssr_addr = ""
         for item in self.ssr:
+            ssr_addr += item
             url = "https://cli.im/api/qrcode/code?text={text}".format(text=item)
             self.urls.append(url)
             print(url)
+        self.copy_addr(ssr_addr)
+        print("-" * 60)
+        print("已成功将所有SSR地址复制到剪贴板，可通过批量导入ssr地址完成配置")
+
+    @staticmethod
+    def copy_addr(s):
+        command = 'echo ' + s.strip() + '| clip'
+        os.system(command)
 
 
 cc = Chaocuo()
@@ -139,3 +150,5 @@ wiki.register(code)
 wiki.login()
 wiki.get_node()
 wiki.get_urls()
+while True:
+    input()
