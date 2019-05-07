@@ -6,6 +6,7 @@ import time
 import re
 import os
 
+TRY_COUNT = 18  # 获取ID尝试次数
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81"
                   " Safari/537.36"
@@ -14,6 +15,7 @@ HEADERS = {
 
 class Chaocuo:
     url = "http://24mail.chacuo.net/"
+    count = 0
 
     def __init__(self):
         self.cookies = None
@@ -33,7 +35,7 @@ class Chaocuo:
         self.cookies = html.cookies
         email = eval(html.text)['data'][0] + "@027168.com"
         self.email = email
-        print("成功拿到一个邮箱地址：{email}".format(email=email))
+        print("[成功] 获取邮箱地址 Email:{email}".format(email=email))
         return email
 
     def _get_mid(self):
@@ -41,12 +43,19 @@ class Chaocuo:
         time.sleep(3.5)
         data = {"data": self.email.split("@")[0], "type": "refresh", "arg": ""}
         html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=HEADERS)
+        self.count += 1
         try:
             mid = eval(html.text)['data'][0]['list'][0]['MID']
             self.mid = mid
-            print("成功获取到邮件id：{mid}".format(mid=mid))
+            print("[成功] 获取邮件ID ID:{mid}".format(mid=mid))
         except IndexError:
-            print("邮件id获取失败，请手动重试")
+            print("[失败] 尝试第{count}次获取邮件ID，系统将尝试{try_count}次后重启程序".format(count=self.count, try_count=TRY_COUNT))
+            if self.count < TRY_COUNT:
+                self._get_mid()
+            else:
+                print("[失败] 正在重启程序")
+                print("-" * 60)
+                main()
 
     def get_data(self):
         # 获取邮件内容
@@ -55,7 +64,7 @@ class Chaocuo:
         data = {"data": self.email.split("@")[0], "type": "mailinfo", "arg": arg}
         html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=HEADERS)
         code = re.search(r"<b>(.*?)<\\/b>", html.text.strip()).group(1)
-        print("成功获取到验证码code：{code}".format(code=code))
+        print("[成功] 获取验证码 Code:{code}".format(code=code))
         self.code = code
         return code
 
@@ -74,7 +83,7 @@ class Wiki:
         # 发送验证码到邮箱
         data = {"email": self.email}
         html = requests.post(url=self.url + "auth/send", data=data, headers=HEADERS)
-        print(eval(html.text)['msg'])
+        print("[提示] " + eval(html.text)['msg'])
 
     def register(self, code):
         # 注册账号：其账号密码昵称均为邮箱
@@ -87,7 +96,7 @@ class Wiki:
             "emailcode": code
         }
         html = requests.post(url=self.url + "auth/register", data=data, headers=HEADERS)
-        print(eval(html.text)['msg'])
+        print("[提示] " + eval(html.text)['msg'])
 
     def login(self):
         # 登录账号
@@ -97,7 +106,7 @@ class Wiki:
         }
         html = requests.post(url=self.url + "auth/login", data=data, headers=HEADERS)
         self.cookies = html.cookies
-        print(eval(html.text)['msg'])
+        print("[成功] 开始获取节点地址" if eval(html.text)['msg'].strip() == "欢迎回来" else "[失败] 结束获取节点地址")
 
     def _get_node_arg(self):
         html = requests.get(url=self.url + "user/node", cookies=self.cookies, headers=HEADERS)
@@ -108,7 +117,7 @@ class Wiki:
         # 获取节点列表
         self._get_node_arg()
         print("-" * 60)
-        print("节点ssr地址列表：")
+        print("节点SSR地址列表：")
         for item in self.node_arg:
             time.sleep(3.5)
             item = item.split(",")
@@ -124,7 +133,7 @@ class Wiki:
 
     def get_urls(self):
         print("-" * 60)
-        print("节点ssr二维码地址列表：")
+        print("节点SSR二维码列表：")
         ssr_addr = ""
         for item in self.ssr:
             ssr_addr += item
@@ -133,7 +142,7 @@ class Wiki:
             print(url)
         self.copy_addr(ssr_addr)
         print("-" * 60)
-        print("已成功将所有SSR地址复制到剪贴板，可通过批量导入ssr地址完成配置")
+        print("[成功] 已将所有SSR地址复制到剪贴板，可通过剪贴板批量导入SSR地址完成配置")
 
     @staticmethod
     def copy_addr(s):
@@ -141,14 +150,18 @@ class Wiki:
         os.system(command)
 
 
-cc = Chaocuo()
-email = cc.get_email()
-wiki = Wiki(email)
-wiki.get_code()
-code = cc.get_data()
-wiki.register(code)
-wiki.login()
-wiki.get_node()
-wiki.get_urls()
-while True:
-    input()
+def main():
+    cc = Chaocuo()
+    email = cc.get_email()
+    wiki = Wiki(email)
+    wiki.get_code()
+    code = cc.get_data()
+    wiki.register(code)
+    wiki.login()
+    wiki.get_node()
+    wiki.get_urls()
+    while True:
+        input()
+
+
+main()
