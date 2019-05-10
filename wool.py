@@ -6,7 +6,7 @@ import time
 import re
 import os
 
-TRY_COUNT = 18  # 获取ID尝试次数
+TRY_COUNT = 16  # 获取ID尝试次数
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81"
                   " Safari/537.36"
@@ -40,15 +40,16 @@ class Chaocuo:
 
     def _get_mid(self):
         # 获取最新的邮件id
-        time.sleep(3.5)
+        time.sleep(2)
         data = {"data": self.email.split("@")[0], "type": "refresh", "arg": ""}
         html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=HEADERS)
         self.count += 1
+        # noinspection PyBroadException
         try:
             mid = eval(html.text)['data'][0]['list'][0]['MID']
             self.mid = mid
             print("[成功] 获取邮件ID ID:{mid}".format(mid=mid))
-        except IndexError:
+        except Exception:
             print("[失败] 尝试第{count}次获取邮件ID，系统将尝试{try_count}次后重启程序".format(count=self.count, try_count=TRY_COUNT))
             if self.count < TRY_COUNT:
                 self._get_mid()
@@ -119,7 +120,7 @@ class Wiki:
         print("-" * 60)
         print("节点SSR地址列表：")
         for item in self.node_arg:
-            time.sleep(3.5)
+            time.sleep(2)
             item = item.split(",")
             url = self.url + "user/node/{0}?ismu={1}&relay_rule={2}".format(item[0][1:-1], item[1], item[2])
             # noinspection PyBroadException
