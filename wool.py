@@ -7,7 +7,7 @@ import re
 import os
 
 TRY_COUNT = 16  # 获取ID尝试次数
-TIME_OUT = 35  # 请求超时时间
+TIME_OUT = 30  # 请求超时时间
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81"
                   " Safari/537.36"
