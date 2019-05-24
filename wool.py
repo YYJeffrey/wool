@@ -153,6 +153,8 @@ class Wiki:
 
 
 def main():
+    print("Github项目地址：https://github.com/YYJeffrey/wool")
+    print("-" * 60)
     cc = Chaocuo()
     email = cc.get_email()
     wiki = Wiki(email)
