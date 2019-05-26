@@ -151,9 +151,8 @@ class Wiki:
         command = 'echo ' + s.strip() + '| clip'
         os.system(command)
 
-
+print("Github项目地址：https://github.com/YYJeffrey/wool")
 def main():
-    print("Github项目地址：https://github.com/YYJeffrey/wool")
     print("-" * 60)
     cc = Chaocuo()
     email = cc.get_email()
