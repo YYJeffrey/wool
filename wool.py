@@ -5,7 +5,9 @@ import requests
 import time
 import re
 import os
+from colorama import init, Fore, Back
 
+GITHUB_URL = "Github项目地址：https://github.com/YYJeffrey/wool"
 TRY_COUNT = 16  # 获取ID尝试次数
 TIME_OUT = 30  # 请求超时时间
 HEADERS = {
@@ -36,7 +38,7 @@ class Chaocuo:
         self.cookies = html.cookies
         email = eval(html.text)['data'][0] + "@027168.com"
         self.email = email
-        print("[成功] 获取邮箱地址 Email:{email}".format(email=email))
+        print("{tip} 获取邮箱地址 Email:{email}".format(tip=Color.green("[成功]"), email=email))
         return email
 
     def _get_mid(self):
@@ -49,14 +51,14 @@ class Chaocuo:
         try:
             mid = eval(html.text)['data'][0]['list'][0]['MID']
             self.mid = mid
-            print("[成功] 获取邮件ID ID:{mid}".format(mid=mid))
+            print("{tip} 获取邮件ID ID:{mid}".format(tip=Color.green("[成功]"), mid=mid))
         except Exception:
-            print("[失败] 尝试第{count}次获取邮件ID，系统将尝试{try_count}次后重启程序".format(count=self.count, try_count=TRY_COUNT))
+            print("{tip} 尝试第{count}次获取邮件ID，系统将尝试{try_count}次后重启程序"
+                  .format(tip=Color.red("[失败]"), count=self.count, try_count=TRY_COUNT))
             if self.count < TRY_COUNT:
                 self._get_mid()
             else:
-                print("[失败] 正在重启程序")
-                print("-" * 60)
+                print("{tip} 正在重启程序".format(tip=Color.blue("[提示]")))
                 main()
 
     def get_data(self):
@@ -66,7 +68,7 @@ class Chaocuo:
         data = {"data": self.email.split("@")[0], "type": "mailinfo", "arg": arg}
         html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=HEADERS, timeout=TIME_OUT)
         code = re.search(r"<b>(.*?)<\\/b>", html.text.strip()).group(1)
-        print("[成功] 获取验证码 Code:{code}".format(code=code))
+        print("{tip} 获取验证码 Code:{code}".format(tip=Color.green("[成功]"), code=code))
         self.code = code
         return code
 
@@ -85,7 +87,7 @@ class Wiki:
         # 发送验证码到邮箱
         data = {"email": self.email}
         html = requests.post(url=self.url + "auth/send", data=data, headers=HEADERS, timeout=TIME_OUT)
-        print("[提示] " + eval(html.text)['msg'])
+        print(Color.blue("[提示] ") + eval(html.text)['msg'])
 
     def register(self, code):
         # 注册账号：其账号密码昵称均为邮箱
@@ -98,7 +100,7 @@ class Wiki:
             "emailcode": code
         }
         html = requests.post(url=self.url + "auth/register", data=data, headers=HEADERS, timeout=TIME_OUT)
-        print("[提示] " + eval(html.text)['msg'])
+        print(Color.blue("[提示] ") + eval(html.text)['msg'])
 
     def login(self):
         # 登录账号
@@ -108,7 +110,10 @@ class Wiki:
         }
         html = requests.post(url=self.url + "auth/login", data=data, headers=HEADERS, timeout=TIME_OUT)
         self.cookies = html.cookies
-        print("[成功] 开始获取节点地址" if eval(html.text)['msg'].strip() == "欢迎回来" else "[失败] 结束获取节点地址")
+        if eval(html.text)['msg'].strip() == "欢迎回来":
+            print("{tip} 开始获取节点地址".format(tip=Color.green("[成功]")))
+        else:
+            print("{tip} 结束获取节点地址".format(tip=Color.red("[失败]")))
 
     def _get_node_arg(self):
         html = requests.get(url=self.url + "user/node", cookies=self.cookies, headers=HEADERS, timeout=TIME_OUT)
@@ -144,14 +149,32 @@ class Wiki:
             print(url)
         self.copy_addr(ssr_addr)
         print("-" * 60)
-        print("[成功] 已将所有SSR地址复制到剪贴板，可通过剪贴板批量导入SSR地址完成配置")
+        print(Color.green("已将所有SSR地址复制到剪贴板，可通过剪贴板批量导入SSR地址完成配置"))
 
     @staticmethod
     def copy_addr(s):
         command = 'echo ' + s.strip() + '| clip'
         os.system(command)
 
-print("Github项目地址：https://github.com/YYJeffrey/wool")
+
+class Color:
+    @staticmethod
+    def red(s):
+        return Fore.RED + s + Fore.RESET
+
+    @staticmethod
+    def green(s):
+        return Fore.GREEN + s + Fore.RESET
+
+    @staticmethod
+    def blue(s):
+        return Fore.BLUE + s + Fore.RESET
+
+    @staticmethod
+    def white(s):
+        return Fore.WHITE + s + Fore.RESET
+
+
 def main():
     print("-" * 60)
     cc = Chaocuo()
@@ -167,4 +190,6 @@ def main():
         input()
 
 
+init(autoreset=True)
+print(GITHUB_URL)
 main()
