@@ -28,7 +28,9 @@ class Chaocuo:
 
     def _get_site_cookie(self):
         # 获取站内cookie
-        self.cookies = requests.get(url=self.url, headers=HEADERS, timeout=TIME_OUT).cookies
+        html = requests.get(url=self.url, headers=HEADERS, timeout=TIME_OUT)
+        print(html.text)
+        self.cookies = html.cookies
 
     def get_email(self):
         # 获取一个邮箱地址
