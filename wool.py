@@ -5,7 +5,7 @@ import requests
 import time
 import re
 import os
-from colorama import init, Fore, Back
+from colorama import init, Fore
 
 GITHUB_URL = "Github项目地址：https://github.com/YYJeffrey/wool"
 TRY_COUNT = 16  # 获取ID尝试次数
@@ -29,7 +29,6 @@ class Chaocuo:
     def _get_site_cookie(self):
         # 获取站内cookie
         html = requests.get(url=self.url, headers=HEADERS, timeout=TIME_OUT)
-        print(html.text)
         self.cookies = html.cookies
 
     def get_email(self):
@@ -144,7 +143,7 @@ class Wiki:
         print("-" * 60)
         print("节点SSR二维码列表：")
         ssr_addr = ""
-        for item in self.ssr:
+        for item in self.ssr[::-1]:
             ssr_addr += item
             url = "https://cli.im/api/qrcode/code?text={text}".format(text=item)
             self.urls.append(url)
