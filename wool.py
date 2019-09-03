@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/4/5
 # @Author  : Jeffrey
+import random
+
 import requests
 import time
 import re
@@ -8,12 +10,9 @@ import os
 from colorama import init, Fore
 
 GITHUB_URL = "Github项目地址：https://github.com/YYJeffrey/wool"
+UA_PATH = 'ua/ua.txt'
 TRY_COUNT = 16  # 获取ID尝试次数
 TIME_OUT = 30  # 请求超时时间
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81"
-                  " Safari/537.36"
-}
 
 
 class Chaocuo:
@@ -22,44 +21,45 @@ class Chaocuo:
 
     def __init__(self):
         self.cookies = None
+        self.headers = ProxyRandom.get_headers()
         self.mid = ""
         self.email = ""
         self.code = ""
 
     def _get_site_cookie(self):
         # 获取站内cookie
-        html = requests.get(url=self.url, headers=HEADERS, timeout=TIME_OUT)
+        html = requests.get(url=self.url, headers=self.headers, timeout=TIME_OUT)
         self.cookies = html.cookies
 
     def get_email(self):
         # 获取一个邮箱地址
         self._get_site_cookie()
         data = {"data": "666", "type": "renew", "arg": "d=027168.com_f="}
-        html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=HEADERS, timeout=TIME_OUT)
+        html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=self.headers, timeout=TIME_OUT)
         self.cookies = html.cookies
         email = eval(html.text)['data'][0] + "@027168.com"
         self.email = email
-        print("{tip} 获取邮箱地址 Email:{email}".format(tip=Color.green("[成功]"), email=email))
+        print("{tip} 获取Email: {email}".format(tip=Color.green("[成功]"), email=email))
         return email
 
     def _get_mid(self):
         # 获取最新的邮件id
         time.sleep(2)
         data = {"data": self.email.split("@")[0], "type": "refresh", "arg": ""}
-        html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=HEADERS, timeout=TIME_OUT)
+        html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=self.headers, timeout=TIME_OUT)
         self.count += 1
         # noinspection PyBroadException
         try:
             mid = eval(html.text)['data'][0]['list'][0]['MID']
             self.mid = mid
-            print("{tip} 获取邮件ID ID:{mid}".format(tip=Color.green("[成功]"), mid=mid))
+            print("{tip} 获取Email ID: {mid}".format(tip=Color.green("[成功]"), mid=mid))
         except Exception:
-            print("{tip} 尝试第{count}次获取邮件ID，系统将尝试{try_count}次后重启程序"
+            print("{tip} 第{count}次尝试获取Email ID，将会在尝试{try_count}次后重启程序"
                   .format(tip=Color.red("[失败]"), count=self.count, try_count=TRY_COUNT))
             if self.count < TRY_COUNT:
                 self._get_mid()
             else:
-                print("{tip} 正在重启程序".format(tip=Color.blue("[提示]")))
+                print("{tip} 正在重启程序...".format(tip=Color.blue("[提示]")))
                 main()
 
     def get_data(self):
@@ -67,19 +67,21 @@ class Chaocuo:
         self._get_mid()
         arg = "f={mid}".format(mid=self.mid)
         data = {"data": self.email.split("@")[0], "type": "mailinfo", "arg": arg}
-        html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=HEADERS, timeout=TIME_OUT)
+        html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=self.headers, timeout=TIME_OUT)
         code = re.search(r"<b>(.*?)<\\/b>", html.text.strip()).group(1)
-        print("{tip} 获取验证码 Code:{code}".format(tip=Color.green("[成功]"), code=code))
+        print("{tip} 获取Code: {code}".format(tip=Color.green("[成功]"), code=code))
         self.code = code
         return code
 
 
 class Wiki:
+    # url = "https://vvoo.in/"
     url = "https://wikicc.net/"
 
     def __init__(self, email):
         self.email = email
         self.cookies = None
+        self.headers = ProxyRandom.get_headers()
         self.node_arg = []
         self.ssr = []
         self.urls = []
@@ -87,8 +89,8 @@ class Wiki:
     def get_code(self):
         # 发送验证码到邮箱
         data = {"email": self.email}
-        html = requests.post(url=self.url + "auth/send", data=data, headers=HEADERS, timeout=TIME_OUT)
-        print(Color.blue("[提示] ") + eval(html.text)['msg'])
+        requests.post(url=self.url + "auth/send", data=data, headers=self.headers, timeout=TIME_OUT)
+        print(Color.blue("[提示] 正在准备Email ID..."))
 
     def register(self, code):
         # 注册账号：其账号密码昵称均为邮箱
@@ -100,8 +102,8 @@ class Wiki:
             "code": "",
             "emailcode": code
         }
-        html = requests.post(url=self.url + "auth/register", data=data, headers=HEADERS, timeout=TIME_OUT)
-        print(Color.blue("[提示] ") + eval(html.text)['msg'])
+        requests.post(url=self.url + "auth/register", data=data, headers=self.headers, timeout=TIME_OUT)
+        print(Color.blue("[提示] 正在准备节点..."))
 
     def login(self):
         # 登录账号
@@ -109,15 +111,15 @@ class Wiki:
             "email": self.email,
             "passwd": self.email
         }
-        html = requests.post(url=self.url + "auth/login", data=data, headers=HEADERS, timeout=TIME_OUT)
+        html = requests.post(url=self.url + "auth/login", data=data, headers=self.headers, timeout=TIME_OUT)
         self.cookies = html.cookies
         if eval(html.text)['msg'].strip() == "欢迎回来":
-            print("{tip} 开始获取节点地址".format(tip=Color.green("[成功]")))
+            print("{tip} 正在获取节点列表...".format(tip=Color.green("[成功]")))
         else:
-            print("{tip} 结束获取节点地址".format(tip=Color.red("[失败]")))
+            print("{tip} 结束获取节点列表...".format(tip=Color.red("[失败]")))
 
     def _get_node_arg(self):
-        html = requests.get(url=self.url + "user/node", cookies=self.cookies, headers=HEADERS, timeout=TIME_OUT)
+        html = requests.get(url=self.url + "user/node", cookies=self.cookies, headers=self.headers, timeout=TIME_OUT)
         res = re.findall(r'<a href="javascript:void\(0\);" onClick="urlChange\((.*?)\)', html.text.strip())
         self.node_arg = res
 
@@ -132,7 +134,7 @@ class Wiki:
             url = self.url + "user/node/{0}?ismu={1}&relay_rule={2}".format(item[0][1:-1], item[1], item[2])
             # noinspection PyBroadException
             try:
-                html = requests.get(url=url, cookies=self.cookies, headers=HEADERS, timeout=TIME_OUT)
+                html = requests.get(url=url, cookies=self.cookies, headers=self.headers, timeout=TIME_OUT)
                 ss = re.search(r"var text_qrcode2 = '(.*?)'", html.text).group(1)
                 print(ss)
                 self.ssr.append(ss)
@@ -174,6 +176,18 @@ class Color:
     @staticmethod
     def white(s):
         return Fore.WHITE + s + Fore.RESET
+
+
+class ProxyRandom:
+    @staticmethod
+    def get_headers():
+        with open(UA_PATH, 'r') as f:
+            lines = f.readlines()
+            index = random.randint(1, len(lines) - 1)
+            headers = {
+                "User-Agent": lines[index].strip()
+            }
+        return headers
 
 
 def main():
