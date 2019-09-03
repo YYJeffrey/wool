@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/4/5
 # @Author  : Jeffrey
+import json
 import random
 
 import requests
@@ -10,7 +11,6 @@ import os
 from colorama import init, Fore
 
 GITHUB_URL = "Github项目地址：https://github.com/YYJeffrey/wool"
-UA_PATH = 'ua/ua.txt'
 TRY_COUNT = 16  # 获取ID尝试次数
 TIME_OUT = 30  # 请求超时时间
 
@@ -21,7 +21,7 @@ class Chaocuo:
 
     def __init__(self):
         self.cookies = None
-        self.headers = ProxyRandom.get_headers()
+        self.headers = p.get_headers()
         self.mid = ""
         self.email = ""
         self.code = ""
@@ -60,7 +60,7 @@ class Chaocuo:
                 self._get_mid()
             else:
                 print("{tip} 正在重启程序...".format(tip=Color.blue("[提示]")))
-                main()
+                start()
 
     def get_data(self):
         # 获取邮件内容
@@ -81,7 +81,7 @@ class Wiki:
     def __init__(self, email):
         self.email = email
         self.cookies = None
-        self.headers = ProxyRandom.get_headers()
+        self.headers = p.get_headers()
         self.node_arg = []
         self.ssr = []
         self.urls = []
@@ -179,18 +179,29 @@ class Color:
 
 
 class ProxyRandom:
-    @staticmethod
-    def get_headers():
-        with open(UA_PATH, 'r') as f:
-            lines = f.readlines()
-            index = random.randint(1, len(lines) - 1)
-            headers = {
-                "User-Agent": lines[index].strip()
-            }
+    ua_url = 'https://fake-useragent.herokuapp.com/browsers/0.1.8'
+
+    def __init__(self):
+        self.ua = []
+
+    def get_ua_pool(self):
+        data = json.loads(requests.get(url=self.ua_url).text)
+        ua_chrome = data['browsers']['chrome']
+        ua_opera = data['browsers']['opera']
+        ua_firefox = data['browsers']['firefox']
+        ua_safari = data['browsers']['safari']
+        ua_inter = data['browsers']['internetexplorer']
+        self.ua = ua_chrome + ua_opera + ua_firefox + ua_safari + ua_inter
+
+    def get_headers(self):
+        index = random.randint(1, len(self.ua) - 1)
+        headers = {
+            "User-Agent": self.ua[index].strip()
+        }
         return headers
 
 
-def main():
+def start():
     print("-" * 60)
     cc = Chaocuo()
     email = cc.get_email()
@@ -205,6 +216,10 @@ def main():
         input()
 
 
-init(autoreset=True)
-print(GITHUB_URL)
-main()
+if __name__ == '__main__':
+    init(autoreset=True)
+    print(GITHUB_URL)
+    print(Color.blue("[提示] 正在准备请求头..."))
+    p = ProxyRandom()
+    p.get_ua_pool()
+    start()
