@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/4/5
 # @Author  : Jeffrey
-import json
 import random
 
 import requests
@@ -10,7 +9,19 @@ import re
 import os
 from colorama import init, Fore
 
-GITHUB_URL = "Github项目地址：https://github.com/YYJeffrey/wool"
+GITHUB_URL = "Github项目地址: https://github.com/YYJeffrey/wool"
+UA = [
+    "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2226.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.4; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2225.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2225.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1500.55 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.93 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.93 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.93 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.90 Safari/537.36"
+]
 TRY_COUNT = 16  # 获取ID尝试次数
 TIME_OUT = 30  # 请求超时时间
 
@@ -75,7 +86,6 @@ class Chaocuo:
 
 
 class Wiki:
-    # url = "https://vvoo.in/"
     url = "https://wikicc.net/"
 
     def __init__(self, email):
@@ -179,19 +189,8 @@ class Color:
 
 
 class ProxyRandom:
-    ua_url = 'https://fake-useragent.herokuapp.com/browsers/0.1.8'
-
     def __init__(self):
-        self.ua = []
-
-    def get_ua_pool(self):
-        data = json.loads(requests.get(url=self.ua_url).text)
-        ua_chrome = data['browsers']['chrome']
-        ua_opera = data['browsers']['opera']
-        ua_firefox = data['browsers']['firefox']
-        ua_safari = data['browsers']['safari']
-        ua_inter = data['browsers']['internetexplorer']
-        self.ua = ua_chrome + ua_opera + ua_firefox + ua_safari + ua_inter
+        self.ua = UA
 
     def get_headers(self):
         index = random.randint(1, len(self.ua) - 1)
@@ -219,7 +218,5 @@ def start():
 if __name__ == '__main__':
     init(autoreset=True)
     print(GITHUB_URL)
-    print(Color.blue("[提示] 正在准备请求头..."))
     p = ProxyRandom()
-    p.get_ua_pool()
     start()
