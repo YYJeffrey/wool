@@ -86,7 +86,7 @@ class Chaocuo:
 
 
 class Wiki:
-    url = "https://wikicc.net/"
+    url = "https://vvoo.in/"
 
     def __init__(self, email):
         self.email = email
@@ -170,6 +170,41 @@ class Wiki:
         os.system(command)
 
 
+class VVoo(Wiki):
+    url = "https://vvoo.in/"
+
+    def login(self):
+        # 登录账号
+        data = {
+            "email": self.email,
+            "passwd": self.email
+        }
+        html = requests.post(url=self.url + "auth/login", data=data, headers=self.headers, timeout=TIME_OUT)
+        self.cookies = html.cookies
+        if eval(html.text)['msg'].strip() == "登录成功":
+            print("{tip} 正在获取节点列表...".format(tip=Color.green("[成功]")))
+        else:
+            print("{tip} 结束获取节点列表...".format(tip=Color.red("[失败]")))
+
+    def _get_node_arg(self):
+        html = requests.get(url=self.url + "user/node", cookies=self.cookies, headers=self.headers, timeout=TIME_OUT)
+        res = re.findall(r'onClick="urlChange\((.*?)\)', html.text.strip())
+        self.node_arg = res[0:int(len(res) / 2)]
+
+    def get_urls(self):
+        print("-" * 60)
+        print("节点SSR二维码列表：")
+        ssr_addr = ""
+        for item in self.ssr[::-1]:
+            ssr_addr += item
+            url = "https://cli.im/api/qrcode/code?text={text}".format(text=item)
+            self.urls.append(url)
+            print(url)
+        self.copy_addr(ssr_addr)
+        print("-" * 60)
+        print(Color.green("已将所有SSR地址复制到剪贴板，可通过剪贴板批量导入SSR地址完成配置"))
+
+
 class Color:
     @staticmethod
     def red(s):
@@ -204,7 +239,7 @@ def start():
     print("-" * 60)
     cc = Chaocuo()
     email = cc.get_email()
-    wiki = Wiki(email)
+    wiki = VVoo(email)
     wiki.get_code()
     code = cc.get_data()
     wiki.register(code)
