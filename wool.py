@@ -2,7 +2,7 @@
 # @Time    : 2019/4/5
 # @Author  : Jeffrey
 import random
-
+import string
 import requests
 import time
 import re
@@ -80,6 +80,66 @@ class Chaocuo:
         data = {"data": self.email.split("@")[0], "type": "mailinfo", "arg": arg}
         html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=self.headers, timeout=TIME_OUT)
         code = re.search(r"<b>(.*?)<\\/b>", html.text.strip()).group(1)
+        print("{tip} 获取Code: {code}".format(tip=Color.green("[成功]"), code=code))
+        self.code = code
+        return code
+
+
+class Guerrill:
+    url = "https://www.guerrillamail.com/ajax.php"
+    count = 0
+
+    def __init__(self):
+        self.session = None
+        self.headers = p.get_headers()
+        self.mid = ""
+        self.email = ""
+        self.code = ""
+
+    def get_email(self):
+        # 获取站内session
+        data = {
+            "email_user": ''.join(random.sample(string.ascii_letters + string.digits, 9)),
+            "lang": "zh",
+            "site": "guerrillamail.com",
+            "in": " 设置 取消"
+        }
+        session = requests.session()
+        res = session.post(url=self.url + "?f=set_email_user", data=data, headers=self.headers, timeout=TIME_OUT)
+        email = re.search(r'"email_addr":"(.*?)"', res.text.strip()).group(1)
+        print("{tip} 获取Email: {email}".format(tip=Color.green("[成功]"), email=email))
+        self.session = session
+        self.email = email
+        return email
+
+    def _get_mid(self):
+        # 获取最新的邮件id
+        time.sleep(2)
+        url = self.url + "?f=get_email_list&offset=0&site=guerrillamail.com&in={0}&_={1}" \
+            .format(self.email.split("@")[0], int(round(time.time() * 1000)))
+        res = self.session.get(url=url, headers=self.headers, timeout=TIME_OUT)
+        self.count += 1
+        # noinspection PyBroadException
+        try:
+            mid = re.search(r'{"list":\[{"mail_id":"(.*?)"', res.text.strip()).group(1)
+            self.mid = mid
+            print("{tip} 获取Email ID: {mid}".format(tip=Color.green("[成功]"), mid=mid))
+        except Exception:
+            print("{tip} 第{count}次尝试获取Email ID，将会在尝试{try_count}次后重启程序"
+                  .format(tip=Color.red("[失败]"), count=self.count, try_count=TRY_COUNT))
+            if self.count < TRY_COUNT:
+                self._get_mid()
+            else:
+                print("{tip} 正在重启程序...".format(tip=Color.blue("[提示]")))
+                start()
+
+    def get_data(self):
+        # 获取邮件内容
+        self._get_mid()
+        url = self.url + "?f=fetch_email&email_id=mr_{0}&site=guerrillamail.com&in={1}&_={2}" \
+            .format(self.mid, self.email.split("@")[0], int(round(time.time() * 1000)))
+        res = self.session.get(url=url, headers=self.headers, timeout=TIME_OUT)
+        code = re.search(r"<b>(.*?)<\\/b>", res.text.strip()).group(1)
         print("{tip} 获取Code: {code}".format(tip=Color.green("[成功]"), code=code))
         self.code = code
         return code
@@ -237,7 +297,7 @@ class ProxyRandom:
 
 def start():
     print("-" * 60)
-    cc = Chaocuo()
+    cc = Guerrill()
     email = cc.get_email()
     wiki = VVoo(email)
     wiki.get_code()
