@@ -26,65 +26,6 @@ TRY_COUNT = 16  # 获取ID尝试次数
 TIME_OUT = 30  # 请求超时时间
 
 
-class Chaocuo:
-    url = "http://24mail.chacuo.net/"
-    count = 0
-
-    def __init__(self):
-        self.cookies = None
-        self.headers = p.get_headers()
-        self.mid = ""
-        self.email = ""
-        self.code = ""
-
-    def _get_site_cookie(self):
-        # 获取站内cookie
-        html = requests.get(url=self.url, headers=self.headers, timeout=TIME_OUT)
-        self.cookies = html.cookies
-
-    def get_email(self):
-        # 获取一个邮箱地址
-        self._get_site_cookie()
-        data = {"data": "666", "type": "renew", "arg": "d=027168.com_f="}
-        html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=self.headers, timeout=TIME_OUT)
-        self.cookies = html.cookies
-        email = eval(html.text)['data'][0] + "@027168.com"
-        self.email = email
-        print("{tip} 获取Email: {email}".format(tip=Color.green("[成功]"), email=email))
-        return email
-
-    def _get_mid(self):
-        # 获取最新的邮件id
-        time.sleep(2)
-        data = {"data": self.email.split("@")[0], "type": "refresh", "arg": ""}
-        html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=self.headers, timeout=TIME_OUT)
-        self.count += 1
-        # noinspection PyBroadException
-        try:
-            mid = eval(html.text)['data'][0]['list'][0]['MID']
-            self.mid = mid
-            print("{tip} 获取Email ID: {mid}".format(tip=Color.green("[成功]"), mid=mid))
-        except Exception:
-            print("{tip} 第{count}次尝试获取Email ID，将会在尝试{try_count}次后重启程序"
-                  .format(tip=Color.red("[失败]"), count=self.count, try_count=TRY_COUNT))
-            if self.count < TRY_COUNT:
-                self._get_mid()
-            else:
-                print("{tip} 正在重启程序...".format(tip=Color.blue("[提示]")))
-                start()
-
-    def get_data(self):
-        # 获取邮件内容
-        self._get_mid()
-        arg = "f={mid}".format(mid=self.mid)
-        data = {"data": self.email.split("@")[0], "type": "mailinfo", "arg": arg}
-        html = requests.post(url=self.url, data=data, cookies=self.cookies, headers=self.headers, timeout=TIME_OUT)
-        code = re.search(r"<b>(.*?)<\\/b>", html.text.strip()).group(1)
-        print("{tip} 获取Code: {code}".format(tip=Color.green("[成功]"), code=code))
-        self.code = code
-        return code
-
-
 class Guerrill:
     url = "https://www.guerrillamail.com/ajax.php"
     count = 0
@@ -97,7 +38,7 @@ class Guerrill:
         self.code = ""
 
     def get_email(self):
-        # 获取站内session
+        # Get Site Session
         data = {
             "email_user": ''.join(random.sample(string.ascii_letters + string.digits, 9)),
             "lang": "zh",
@@ -113,7 +54,7 @@ class Guerrill:
         return email
 
     def _get_mid(self):
-        # 获取最新的邮件id
+        # Get Mail ID
         time.sleep(2)
         url = self.url + "?f=get_email_list&offset=0&site=guerrillamail.com&in={0}&_={1}" \
             .format(self.email.split("@")[0], int(round(time.time() * 1000)))
@@ -134,7 +75,7 @@ class Guerrill:
                 start()
 
     def get_data(self):
-        # 获取邮件内容
+        # Get Mail Data
         self._get_mid()
         url = self.url + "?f=fetch_email&email_id=mr_{0}&site=guerrillamail.com&in={1}&_={2}" \
             .format(self.mid, self.email.split("@")[0], int(round(time.time() * 1000)))
@@ -157,16 +98,15 @@ class Wiki:
         self.urls = []
 
     def get_code(self):
-        # 发送验证码到邮箱
+        # Send Code To Mail
         data = {"email": self.email}
         requests.post(url=self.url + "auth/send", data=data, headers=self.headers, timeout=TIME_OUT)
         print(Color.blue("[提示] 正在准备Email ID..."))
 
     def register(self, code):
-        # 注册账号：其账号密码昵称均为邮箱
         data = {
             "email": self.email,
-            "name": self.email,
+            "name": self.email.split("@")[0],
             "passwd": self.email,
             "repasswd": self.email,
             "code": "",
@@ -176,7 +116,6 @@ class Wiki:
         print(Color.blue("[提示] 正在准备节点..."))
 
     def login(self):
-        # 登录账号
         data = {
             "email": self.email,
             "passwd": self.email
@@ -194,7 +133,6 @@ class Wiki:
         self.node_arg = res
 
     def get_node(self):
-        # 获取节点列表
         self._get_node_arg()
         print("-" * 60)
         print("节点SSR地址列表：")
@@ -234,7 +172,6 @@ class VVoo(Wiki):
     url = "https://vvoo.in/"
 
     def login(self):
-        # 登录账号
         data = {
             "email": self.email,
             "passwd": self.email
